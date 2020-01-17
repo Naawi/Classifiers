@@ -1,56 +1,60 @@
-# classify-breat-cancer.py
+# classify-breast-cancer-simple.py
 # 17-jan-2020
-# This code demonstrates decision tree classification on
-# the Wisconsin breast cancer data set
-
-import numpy as np 
-import matplotlib.pyplot as plt 
+#
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn import tree
 from sklearn.datasets import load_breast_cancer
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
 
 
-# parameters
+# Parameters
 plot_step = 0.02
-plot_colors = "rm"
-classes = 2 # has cancer (1) or doesn't have it (0)
 
 
-# load data
-breast_cancer = load_breast_cancer()
-num_features = len( breast_cancer.data[ 0 ] )
+def build_scatter_plot( ftr_1, ftr_2 ):
+    # Load the data
+    breast_cancer = load_breast_cancer()
+    X = breast_cancer.data[:, [ ftr_1, ftr_2 ] ] 
+    y = breast_cancer.target 
 
-# classify and plot data
-plt.figure()
-plt.rc( 'xtick', labelsize = 8 )
-plt.rc( 'ytick', labelsize = 8 )
+    breast_cancer_tree = tree.DecisionTreeClassifier(criterion="entropy").fit(X, y) 
 
-# pair up features and plot their graphs
-for i in range( 0, num_features ):
-    for j in range( i + 1, num_features ):
-        pair = [ i, j ]
-        features = breast_cancer.data[:, pair] # splits the list and picks out 
-                                          # the features specified in the pair
-        answers = breast_cancer.target
-        # train classifier
-        tree = DecisionTreeClassifier().fit( features, answers )
-        # plot decision boundaries by enumerating from
-        # the min value to the max value observed from the data
-        plt.subplot( num_features, num_features, j*num_features + i + 1 )
-        x_min, x_max = features[ :, 0 ].min() - 1, features[ :, 0 ].max() + 1
-        y_min, y_max = features[ :, 1 ].min() - 1, features[ :, 1 ].max() + 1
-        xx, yy = np.meshgrid( np.arange( x_min, x_max, plot_step ), 
-                              np.arange( y_min, y_max, plot_step ) )
-        Z = tree.predict( np.c_[ xx.ravel(), yy.ravel() ] )
-        Z = Z.reshape( xx.shape )
-        cs = plt.contourf( xx, yy, Z, cmap = plt.cm.Paired )
-        plt.xlabel( breast_cancer.feature_names[ pair[ 0 ] ], fontsize = 8 )
-        plt.ylabel( breast_cancer.feature_names[ pair[ 1 ] ], fontsize = 8 )
-        plt.axis( "tight" )
-        # plot training points
-        for ii, colour in zip( range( classes ), plot_colors ):
-            idx = np.where( answers == ii )
-            plt.scatter( features[ idx, 0 ], features[ idx, 1 ], c = colour, 
-                         label = breast_cancer.target_names[ ii ], cmap = plt.cm.Paired )
-            plt.axis( "tight" )
+    # test accuracy of model
+    # X_train, X_test, y_train, y_test = train_test_split( breast_cancer.data, breast_cancer.target, 
+    #                                                      test_size = 0.1, random_state = 0 )
+    # breast_cancer_tree = tree.DecisionTreeClassifier( criterion = "entropy" ).fit( X_train, y_train ) 
+    # print( "accuracy:", breast_cancer_tree.score( X_test, y_test ) )
 
-plt.show()
+    # Now plot the decision surface that we just learnt by using the decision tree to
+    # classify every background point.
+    # 0 is the first feature, 1 is the other feature
+    x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+    y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, plot_step),
+                        np.arange(y_min, y_max, plot_step))
+
+    Z = breast_cancer_tree.predict(np.c_[xx.ravel(), yy.ravel()]) # Here we use the tree
+                                                        # to predict the classification
+                                                        # of each background point.
+    Z = Z.reshape(xx.shape)
+    cs = plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)
+
+    # Also plot the original data on the same axes
+    plt.scatter(X[:, 0], X[:, 1], c=y.astype(np.float))
+
+    # Label axes
+    plt.xlabel( breast_cancer.feature_names[ ftr_1 ], fontsize=10 )
+    plt.ylabel( breast_cancer.feature_names[ ftr_2 ], fontsize=10 )
+
+    #plt.savefig( f"breast-cancer-plts/features-{ftr_1}-{ftr_2}.png" )
+    plt.show()
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description='Specify features for building decision tree')
+    parser.add_argument('--f1', metavar = 'int', required = True )
+    parser.add_argument('--f2', metavar = 'int', required = True )
+    args = parser.parse_args()
+    build_scatter_plot( ftr_1 = int( args.f1 ), ftr_2 = int( args.f2 ) )
