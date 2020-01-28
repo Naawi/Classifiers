@@ -25,7 +25,7 @@ from sklearn.model_selection import train_test_split
 # Will create a dataset with a linear relationship between input and output
 # The main parameters of make-regression are the number of samples, the number
 # of features (how many dimensions the problem has), and the amount of noise.
-X, y = make_regression(n_samples=500, n_features=1, noise=0)
+X, y = make_regression(n_samples=100, n_features=1, noise=2)
 
 # Split the data into training and test set
 X_train, X_test, y_train, y_test = train_test_split(
